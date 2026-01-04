@@ -4,19 +4,14 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from typing import Optional
 from datetime import timedelta
+from contextlib import asynccontextmanager
 
 import database
 import auth
 
-# Initialize FastAPI app
-app = FastAPI(title="Database Viewer", version="1.0.0")
-
-# Setup templates
-templates = Jinja2Templates(directory="templates")
-
 # Initialize database on startup
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     """Initialize database and create default admin user"""
     database.init_db()
     
@@ -26,6 +21,15 @@ async def startup_event():
         password_hash = auth.get_password_hash("admin123")
         database.create_admin("admin", password_hash)
         print("Default admin user created: admin/admin123")
+    
+    yield
+    # Cleanup on shutdown (if needed)
+
+# Initialize FastAPI app
+app = FastAPI(title="Database Viewer", version="1.0.0", lifespan=lifespan)
+
+# Setup templates
+templates = Jinja2Templates(directory="templates")
 
 def get_current_user(access_token: Optional[str] = Cookie(None)) -> Optional[dict]:
     """Get current user from access token cookie"""

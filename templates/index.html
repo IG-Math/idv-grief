@@ -248,7 +248,7 @@
                         <div class="data-meta">ID: {{ item.id }} | Created: {{ item.created_at }}</div>
                         {% if is_admin %}
                             <div class="actions">
-                                <button onclick="openEditModal({{ item.id }}, '{{ item.title }}', '{{ item.description }}')" class="btn btn-primary">Edit</button>
+                                <button onclick="openEditModal(this)" data-id="{{ item.id }}" data-title="{{ item.title }}" data-description="{{ item.description }}" class="btn btn-primary">Edit</button>
                                 <button onclick="deleteEntry({{ item.id }})" class="btn btn-danger">Delete</button>
                             </div>
                         {% endif %}
@@ -312,7 +312,10 @@
             document.getElementById('createModal').classList.remove('active');
         }
 
-        function openEditModal(id, title, description) {
+        function openEditModal(button) {
+            const id = button.getAttribute('data-id');
+            const title = button.getAttribute('data-title');
+            const description = button.getAttribute('data-description');
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-title').value = title;
             document.getElementById('edit-description').value = description;
