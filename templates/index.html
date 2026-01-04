@@ -229,12 +229,29 @@
         </header>
 
         <div class="content">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="color: #2d3748;">Data Entries</h2>
                 {% if is_admin %}
                     <button onclick="openCreateModal()" class="btn btn-success">➕ Add New Entry</button>
                 {% endif %}
             </div>
+
+            <!-- Search Form -->
+            <form action="/" method="get" style="margin-bottom: 20px;">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input 
+                        type="text" 
+                        name="search" 
+                        placeholder="Search by name..." 
+                        value="{{ search_query|e }}"
+                        style="flex: 1; padding: 10px; border: 1px solid #cbd5e0; border-radius: 5px; font-size: 14px;"
+                    >
+                    <button type="submit" class="btn btn-primary">🔍 Search</button>
+                    {% if search_query %}
+                        <a href="/" class="btn btn-secondary">Clear</a>
+                    {% endif %}
+                </div>
+            </form>
 
             {% if message %}
                 <div class="alert alert-{{ message_type|e }}">{{ message|e }}</div>
@@ -245,10 +262,18 @@
                     <div class="data-card">
                         <h3>{{ item.title|e }}</h3>
                         <p>{{ item.description|e }}</p>
-                        <div class="data-meta">ID: {{ item.id }} | Created: {{ item.created_at }}</div>
+                        <div class="data-meta">
+                            {% if is_admin %}ID: {{ item.id }} | {% endif %}
+                            Date: {{ item.created_at }} | Rate: {{ item.rate }}%
+                        </div>
                         {% if is_admin %}
                             <div class="actions">
-                                <button onclick="openEditModal(this)" data-id="{{ item.id }}" data-title="{{ item.title|e }}" data-description="{{ item.description|e }}" class="btn btn-primary">Edit</button>
+                                <button onclick="openEditModal(this)" 
+                                    data-id="{{ item.id }}" 
+                                    data-title="{{ item.title|e }}" 
+                                    data-description="{{ item.description|e }}"
+                                    data-rate="{{ item.rate }}"
+                                    class="btn btn-primary">Edit</button>
                                 <button onclick="deleteEntry({{ item.id }})" class="btn btn-danger">Delete</button>
                             </div>
                         {% endif %}
@@ -274,6 +299,10 @@
                     <label for="description">Description</label>
                     <textarea id="description" name="description" required></textarea>
                 </div>
+                <div class="form-group">
+                    <label for="rate">Rate (%)</label>
+                    <input type="number" id="rate" name="rate" step="0.01" min="0" max="100" value="0" required>
+                </div>
                 <button type="submit" class="btn btn-success">Create</button>
                 <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
             </form>
@@ -297,6 +326,10 @@
                     <label for="edit-description">Description</label>
                     <textarea id="edit-description" name="description" required></textarea>
                 </div>
+                <div class="form-group">
+                    <label for="edit-rate">Rate (%)</label>
+                    <input type="number" id="edit-rate" name="rate" step="0.01" min="0" max="100" value="0" required>
+                </div>
                 <button type="submit" class="btn btn-primary">Update</button>
                 <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
             </form>
@@ -316,9 +349,11 @@
             const id = button.getAttribute('data-id');
             const title = button.getAttribute('data-title');
             const description = button.getAttribute('data-description');
+            const rate = button.getAttribute('data-rate');
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-title').value = title;
             document.getElementById('edit-description').value = description;
+            document.getElementById('edit-rate').value = rate;
             document.getElementById('editForm').action = '/data/' + id;
             document.getElementById('editModal').classList.add('active');
         }

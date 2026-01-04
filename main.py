@@ -46,11 +46,12 @@ async def index(
     request: Request, 
     access_token: Optional[str] = Cookie(None), 
     message: Optional[str] = Query(None, max_length=200),
-    message_type: Optional[str] = Query(None, regex="^(success|error)$")
+    message_type: Optional[str] = Query(None, regex="^(success|error)$"),
+    search: Optional[str] = Query(None, max_length=200)
 ):
     """Home page - display all data entries"""
     user = get_current_user(access_token)
-    data_entries = database.get_all_data()
+    data_entries = database.get_all_data(search_query=search)
     
     return templates.TemplateResponse("index.html", {
         "request": request,
@@ -58,7 +59,8 @@ async def index(
         "is_admin": user is not None,
         "username": user.get("username") if user else None,
         "message": message,
-        "message_type": message_type
+        "message_type": message_type,
+        "search_query": search or ""
     })
 
 @app.get("/admin/login", response_class=HTMLResponse)
@@ -109,9 +111,9 @@ async def logout():
     return response
 
 @app.get("/data")
-async def get_data():
+async def get_data(search: Optional[str] = Query(None, max_length=200)):
     """API endpoint to get all data entries"""
-    data_entries = database.get_all_data()
+    data_entries = database.get_all_data(search_query=search)
     return {"data": data_entries}
 
 @app.post("/data")
@@ -119,6 +121,7 @@ async def create_data(
     request: Request,
     title: str = Form(...),
     description: str = Form(...),
+    rate: float = Form(0.0),
     access_token: Optional[str] = Cookie(None)
 ):
     """Create a new data entry (admin only)"""
@@ -126,7 +129,7 @@ async def create_data(
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-    database.create_data(title, description)
+    database.create_data(title, description, rate)
     return RedirectResponse(url="/?message=Entry created successfully&message_type=success", 
                           status_code=303)
 
@@ -135,6 +138,7 @@ async def update_data(
     data_id: int,
     title: str = Form(...),
     description: str = Form(...),
+    rate: float = Form(0.0),
     access_token: Optional[str] = Cookie(None)
 ):
     """Update a data entry (admin only)"""
@@ -142,7 +146,7 @@ async def update_data(
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-    success = database.update_data(data_id, title, description)
+    success = database.update_data(data_id, title, description, rate)
     if not success:
         raise HTTPException(status_code=404, detail="Data entry not found")
     
