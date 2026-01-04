@@ -39,7 +39,7 @@ def format_date(date_string):
         # Try to parse the datetime string
         dt = datetime.fromisoformat(str(date_string).replace('Z', '+00:00'))
         return dt.strftime('%Y/%m/%d')
-    except:
+    except (ValueError, TypeError, AttributeError):
         # If parsing fails, return the original string
         return date_string
 
