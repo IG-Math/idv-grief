@@ -4,9 +4,11 @@ from fastapi.templating import Jinja2Templates
 from typing import Optional
 from datetime import timedelta
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
 
 import database
 import auth
+load_dotenv()
 
 # Initialize database on startup
 @asynccontextmanager
@@ -17,7 +19,7 @@ async def lifespan(app: FastAPI):
     # Create default admin user if doesn't exist
     admin = database.get_admin_by_username("admin")
     if not admin:
-        password_hash = auth.get_password_hash("admin123")
+        password_hash = auth.get_password_hash(os.getenviron("PASS")|"admin123")
         database.create_admin("admin", password_hash)
         print("Default admin user created: admin/admin123")
     
