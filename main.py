@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Request, Form, Cookie, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
 from typing import Optional
 from datetime import timedelta
 from contextlib import asynccontextmanager
