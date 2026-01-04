@@ -143,18 +143,23 @@ async def create_data(
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-    # Check if custom_id already exists
-    if custom_id is not None:
-        existing = database.get_data_by_id(custom_id)
-        if existing:
+    try:
+        database.create_data(title, description, rate, custom_id)
+        return RedirectResponse(url="/?message=Entry created successfully&message_type=success", 
+                              status_code=303)
+    except Exception as e:
+        # Handle duplicate ID or other database errors
+        error_msg = str(e)
+        if "UNIQUE constraint failed" in error_msg or "PRIMARY KEY must be unique" in error_msg:
             return RedirectResponse(
                 url=f"/?message=ID {custom_id} already exists&message_type=error",
                 status_code=303
             )
-    
-    database.create_data(title, description, rate, custom_id)
-    return RedirectResponse(url="/?message=Entry created successfully&message_type=success", 
-                          status_code=303)
+        else:
+            return RedirectResponse(
+                url=f"/?message=Error creating entry&message_type=error",
+                status_code=303
+            )
 
 @app.post("/data/{data_id}")
 async def update_data(
