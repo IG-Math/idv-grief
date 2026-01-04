@@ -77,15 +77,24 @@ def get_data_by_id(data_id: int) -> Optional[dict]:
         row = cursor.fetchone()
         return dict(row) if row else None
 
-def create_data(title: str, description: str, rate: float = 0.0) -> int:
-    """Create a new data entry"""
+def create_data(title: str, description: str, rate: float = 0.0, custom_id: Optional[int] = None) -> int:
+    """Create a new data entry with optional custom ID"""
     with get_db() as conn:
         cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO data (title, description, rate) VALUES (?, ?, ?)",
-            (title, description, rate)
-        )
-        return cursor.lastrowid
+        if custom_id is not None:
+            # Insert with custom ID
+            cursor.execute(
+                "INSERT INTO data (id, title, description, rate) VALUES (?, ?, ?, ?)",
+                (custom_id, title, description, rate)
+            )
+            return custom_id
+        else:
+            # Auto-generate ID
+            cursor.execute(
+                "INSERT INTO data (title, description, rate) VALUES (?, ?, ?)",
+                (title, description, rate)
+            )
+            return cursor.lastrowid
 
 def update_data(data_id: int, title: str, description: str, rate: float = 0.0) -> bool:
     """Update an existing data entry"""

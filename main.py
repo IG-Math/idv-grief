@@ -135,6 +135,7 @@ async def create_data(
     title: str = Form(...),
     description: str = Form(...),
     rate: float = Form(...),
+    custom_id: Optional[int] = Form(None),
     access_token: Optional[str] = Cookie(None)
 ):
     """Create a new data entry (admin only)"""
@@ -142,7 +143,16 @@ async def create_data(
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-    database.create_data(title, description, rate)
+    # Check if custom_id already exists
+    if custom_id is not None:
+        existing = database.get_data_by_id(custom_id)
+        if existing:
+            return RedirectResponse(
+                url=f"/?message=ID {custom_id} already exists&message_type=error",
+                status_code=303
+            )
+    
+    database.create_data(title, description, rate, custom_id)
     return RedirectResponse(url="/?message=Entry created successfully&message_type=success", 
                           status_code=303)
 

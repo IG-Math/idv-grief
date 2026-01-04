@@ -292,6 +292,10 @@
             </div>
             <form action="/data" method="post">
                 <div class="form-group">
+                    <label for="custom_id">ID (Optional - leave blank for auto-generate)</label>
+                    <input type="number" id="custom_id" name="custom_id" step="1" min="1">
+                </div>
+                <div class="form-group">
                     <label for="title">Title</label>
                     <input type="text" id="title" name="title" required>
                 </div>
