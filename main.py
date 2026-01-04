@@ -19,7 +19,7 @@ async def lifespan(app: FastAPI):
     # Create default admin user if doesn't exist
     admin = database.get_admin_by_username("admin")
     if not admin:
-        password_hash = auth.get_password_hash(os.getenv("PASS")|"admin123")
+        password_hash = auth.get_password_hash(os.getenv("PASS"))
         database.create_admin("admin", password_hash)
         print("Default admin user created: admin/admin123")
     
