@@ -264,7 +264,7 @@
                         <p>{{ item.description|e }}</p>
                         <div class="data-meta">
                             {% if is_admin %}ID: {{ item.id }} | {% endif %}
-                            Date: {{ item.created_at }} | Rate: {{ item.rate }}%
+                            Date: {{ item.created_at }} | Rate: {{ item.rate|e }}%
                         </div>
                         {% if is_admin %}
                             <div class="actions">
@@ -272,7 +272,7 @@
                                     data-id="{{ item.id }}" 
                                     data-title="{{ item.title|e }}" 
                                     data-description="{{ item.description|e }}"
-                                    data-rate="{{ item.rate }}"
+                                    data-rate="{{ item.rate|e }}"
                                     class="btn btn-primary">Edit</button>
                                 <button onclick="deleteEntry({{ item.id }})" class="btn btn-danger">Delete</button>
                             </div>

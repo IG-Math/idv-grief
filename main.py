@@ -121,7 +121,7 @@ async def create_data(
     request: Request,
     title: str = Form(...),
     description: str = Form(...),
-    rate: float = Form(0.0),
+    rate: float = Form(...),
     access_token: Optional[str] = Cookie(None)
 ):
     """Create a new data entry (admin only)"""
@@ -138,7 +138,7 @@ async def update_data(
     data_id: int,
     title: str = Form(...),
     description: str = Form(...),
-    rate: float = Form(0.0),
+    rate: float = Form(...),
     access_token: Optional[str] = Cookie(None)
 ):
     """Update a data entry (admin only)"""
