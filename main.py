@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Form, Cookie, HTTPException, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from typing import Optional
-from datetime import timedelta
+from datetime import timedelta, datetime
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 import os
@@ -31,6 +31,19 @@ app = FastAPI(title="Database Viewer", version="1.0.0", lifespan=lifespan)
 
 # Setup templates
 templates = Jinja2Templates(directory="templates")
+
+# Add custom Jinja2 filter for date formatting
+def format_date(date_string):
+    """Format date string to YYYY/MM/DD"""
+    try:
+        # Try to parse the datetime string
+        dt = datetime.fromisoformat(str(date_string).replace('Z', '+00:00'))
+        return dt.strftime('%Y/%m/%d')
+    except:
+        # If parsing fails, return the original string
+        return date_string
+
+templates.env.filters['format_date'] = format_date
 
 def get_current_user(access_token: Optional[str] = Cookie(None)) -> Optional[dict]:
     """Get current user from access token cookie"""

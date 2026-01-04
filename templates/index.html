@@ -264,7 +264,7 @@
                         <p>{{ item.description|e }}</p>
                         <div class="data-meta">
                             {% if is_admin %}ID: {{ item.id }} | {% endif %}
-                            Date: {{ item.created_at }} | Rate: {{ item.rate|e }}%
+                            Date: {{ item.created_at|format_date }} | Rate: {{ item.rate|e }}%
                         </div>
                         {% if is_admin %}
                             <div class="actions">
