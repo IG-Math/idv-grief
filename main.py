@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Form, Cookie, HTTPException, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from typing import Optional
-from datetime import timedelta
+from datetime import timedelta, datetime
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 import os
@@ -32,6 +32,19 @@ app = FastAPI(title="Database Viewer", version="1.0.0", lifespan=lifespan)
 # Setup templates
 templates = Jinja2Templates(directory="templates")
 
+# Add custom Jinja2 filter for date formatting
+def format_date(date_string):
+    """Format date string to YYYY/MM/DD"""
+    try:
+        # Try to parse the datetime string
+        dt = datetime.fromisoformat(str(date_string).replace('Z', '+00:00'))
+        return dt.strftime('%Y/%m/%d')
+    except (ValueError, TypeError, AttributeError):
+        # If parsing fails, return the original string
+        return date_string
+
+templates.env.filters['format_date'] = format_date
+
 def get_current_user(access_token: Optional[str] = Cookie(None)) -> Optional[dict]:
     """Get current user from access token cookie"""
     if not access_token:
@@ -46,11 +59,12 @@ async def index(
     request: Request, 
     access_token: Optional[str] = Cookie(None), 
     message: Optional[str] = Query(None, max_length=200),
-    message_type: Optional[str] = Query(None, regex="^(success|error)$")
+    message_type: Optional[str] = Query(None, regex="^(success|error)$"),
+    search: Optional[str] = Query(None, max_length=200)
 ):
     """Home page - display all data entries"""
     user = get_current_user(access_token)
-    data_entries = database.get_all_data()
+    data_entries = database.get_all_data(search_query=search)
     
     return templates.TemplateResponse("index.html", {
         "request": request,
@@ -58,7 +72,8 @@ async def index(
         "is_admin": user is not None,
         "username": user.get("username") if user else None,
         "message": message,
-        "message_type": message_type
+        "message_type": message_type,
+        "search_query": search or ""
     })
 
 @app.get("/admin/login", response_class=HTMLResponse)
@@ -109,9 +124,9 @@ async def logout():
     return response
 
 @app.get("/data")
-async def get_data():
+async def get_data(search: Optional[str] = Query(None, max_length=200)):
     """API endpoint to get all data entries"""
-    data_entries = database.get_all_data()
+    data_entries = database.get_all_data(search_query=search)
     return {"data": data_entries}
 
 @app.post("/data")
@@ -119,6 +134,8 @@ async def create_data(
     request: Request,
     title: str = Form(...),
     description: str = Form(...),
+    rate: float = Form(...),
+    custom_id: Optional[int] = Form(None),
     access_token: Optional[str] = Cookie(None)
 ):
     """Create a new data entry (admin only)"""
@@ -126,15 +143,30 @@ async def create_data(
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-    database.create_data(title, description)
-    return RedirectResponse(url="/?message=Entry created successfully&message_type=success", 
-                          status_code=303)
+    try:
+        database.create_data(title, description, rate, custom_id)
+        return RedirectResponse(url="/?message=Entry created successfully&message_type=success", 
+                              status_code=303)
+    except Exception as e:
+        # Handle duplicate ID or other database errors
+        error_msg = str(e)
+        if "UNIQUE constraint failed" in error_msg or "PRIMARY KEY must be unique" in error_msg:
+            return RedirectResponse(
+                url=f"/?message=ID {custom_id} already exists&message_type=error",
+                status_code=303
+            )
+        else:
+            return RedirectResponse(
+                url=f"/?message=Error creating entry&message_type=error",
+                status_code=303
+            )
 
 @app.post("/data/{data_id}")
 async def update_data(
     data_id: int,
     title: str = Form(...),
     description: str = Form(...),
+    rate: float = Form(...),
     access_token: Optional[str] = Cookie(None)
 ):
     """Update a data entry (admin only)"""
@@ -142,7 +174,7 @@ async def update_data(
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-    success = database.update_data(data_id, title, description)
+    success = database.update_data(data_id, title, description, rate)
     if not success:
         raise HTTPException(status_code=404, detail="Data entry not found")
     

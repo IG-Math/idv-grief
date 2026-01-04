@@ -29,7 +29,8 @@ def init_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 title TEXT NOT NULL,
                 description TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                rate REAL DEFAULT 0
             )
         """)
         
@@ -46,20 +47,26 @@ def init_db():
         cursor.execute("SELECT COUNT(*) FROM data")
         if cursor.fetchone()[0] == 0:
             sample_data = [
-                ("Sample Entry 1", "This is the first sample entry"),
-                ("Sample Entry 2", "This is the second sample entry"),
-                ("Sample Entry 3", "This is the third sample entry"),
+                ("Sample Entry 1", "This is the first sample entry", 85.5),
+                ("Sample Entry 2", "This is the second sample entry", 92.0),
+                ("Sample Entry 3", "This is the third sample entry", 78.3),
             ]
             cursor.executemany(
-                "INSERT INTO data (title, description) VALUES (?, ?)",
+                "INSERT INTO data (title, description, rate) VALUES (?, ?, ?)",
                 sample_data
             )
 
-def get_all_data() -> List[dict]:
-    """Retrieve all data entries"""
+def get_all_data(search_query: Optional[str] = None) -> List[dict]:
+    """Retrieve all data entries, optionally filtered by search query"""
     with get_db() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM data ORDER BY created_at DESC")
+        if search_query:
+            cursor.execute(
+                "SELECT * FROM data WHERE title LIKE ? ORDER BY created_at DESC",
+                (f"%{search_query}%",)
+            )
+        else:
+            cursor.execute("SELECT * FROM data ORDER BY created_at DESC")
         return [dict(row) for row in cursor.fetchall()]
 
 def get_data_by_id(data_id: int) -> Optional[dict]:
@@ -70,23 +77,32 @@ def get_data_by_id(data_id: int) -> Optional[dict]:
         row = cursor.fetchone()
         return dict(row) if row else None
 
-def create_data(title: str, description: str) -> int:
-    """Create a new data entry"""
+def create_data(title: str, description: str, rate: float = 0.0, custom_id: Optional[int] = None) -> int:
+    """Create a new data entry with optional custom ID"""
     with get_db() as conn:
         cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO data (title, description) VALUES (?, ?)",
-            (title, description)
-        )
-        return cursor.lastrowid
+        if custom_id is not None:
+            # Insert with custom ID
+            cursor.execute(
+                "INSERT INTO data (id, title, description, rate) VALUES (?, ?, ?, ?)",
+                (custom_id, title, description, rate)
+            )
+            return custom_id
+        else:
+            # Auto-generate ID
+            cursor.execute(
+                "INSERT INTO data (title, description, rate) VALUES (?, ?, ?)",
+                (title, description, rate)
+            )
+            return cursor.lastrowid
 
-def update_data(data_id: int, title: str, description: str) -> bool:
+def update_data(data_id: int, title: str, description: str, rate: float = 0.0) -> bool:
     """Update an existing data entry"""
     with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "UPDATE data SET title = ?, description = ? WHERE id = ?",
-            (title, description, data_id)
+            "UPDATE data SET title = ?, description = ?, rate = ? WHERE id = ?",
+            (title, description, rate, data_id)
         )
         return cursor.rowcount > 0
 
