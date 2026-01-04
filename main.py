@@ -5,7 +5,7 @@ from typing import Optional
 from datetime import timedelta
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
-
+import os
 import database
 import auth
 load_dotenv()
