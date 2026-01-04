@@ -6,7 +6,13 @@ import os
 
 # Configuration
 # WARNING: Change SECRET_KEY in production! Use environment variables for sensitive configuration.
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    # For development only - use a default key
+    # In production, this should raise an error instead
+    SECRET_KEY = "your-secret-key-change-in-production"
+    print("WARNING: Using default SECRET_KEY. Set SECRET_KEY environment variable in production!")
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

@@ -218,7 +218,7 @@
             <h1>📊 Database Viewer</h1>
             <div class="auth-section">
                 {% if is_admin %}
-                    <span class="user-info">Admin: {{ username }}</span>
+                    <span class="user-info">Admin: {{ username|e }}</span>
                     <form action="/admin/logout" method="post" style="display: inline;">
                         <button type="submit" class="btn btn-secondary">Logout</button>
                     </form>
@@ -237,14 +237,14 @@
             </div>
 
             {% if message %}
-                <div class="alert alert-{{ message_type }}">{{ message }}</div>
+                <div class="alert alert-{{ message_type|e }}">{{ message|e }}</div>
             {% endif %}
 
             <div class="data-grid">
                 {% for item in data %}
                     <div class="data-card">
-                        <h3>{{ item.title }}</h3>
-                        <p>{{ item.description }}</p>
+                        <h3>{{ item.title|e }}</h3>
+                        <p>{{ item.description|e }}</p>
                         <div class="data-meta">ID: {{ item.id }} | Created: {{ item.created_at }}</div>
                         {% if is_admin %}
                             <div class="actions">

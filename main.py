@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form, Cookie, HTTPException
+from fastapi import FastAPI, Request, Form, Cookie, HTTPException, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from typing import Optional
@@ -40,8 +40,12 @@ def get_current_user(access_token: Optional[str] = Cookie(None)) -> Optional[dic
     return payload
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request, access_token: Optional[str] = Cookie(None), 
-                message: Optional[str] = None, message_type: Optional[str] = None):
+async def index(
+    request: Request, 
+    access_token: Optional[str] = Cookie(None), 
+    message: Optional[str] = Query(None, max_length=200),
+    message_type: Optional[str] = Query(None, regex="^(success|error)$")
+):
     """Home page - display all data entries"""
     user = get_current_user(access_token)
     data_entries = database.get_all_data()
